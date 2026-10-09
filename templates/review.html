@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>그림 검토 화면 — [검토 대상 제목을 여기에]</title>
+<!--
+================================================================================
+  이 파일은 "그림 검토 화면"의 빈 틀이다. 원본 예제는
+  examples/figure-review-loop/dashboard.html — 카드 3장짜리 실습용 화면이다.
+
+  이 틀은 그 예제를 복사해서 만드는 게 아니라, 처음부터 빈 채로 여는 용도다.
+  예제를 그대로 복사해서 쓰면 안 되는 이유가 둘 있다.
+
+  ① 피드백은 브라우저 localStorage에 저장되는데, 그 저장 칸의 이름
+     (아래 <body data-dash-id="...">)이 파일 안에 고정돼 있다. 예제 화면을
+     복사하면 이 이름까지 그대로 따라오고, 그러면 예제 화면과 당신 화면이
+     같은 저장 칸을 공유한다 — 예제를 보며 남긴 지적이 당신 화면에 뜨고,
+     내보내기 파일명도 예제 접두사(figure-review-loop-v1-feedback-...)로
+     나온다.
+  ② 이 책 6장 3절 규약: "검토 대상이 다른 화면끼리는 저장 자리를 서로
+     겹치지 않게 나눈다. 안 그러면 다른 산출물을 보다 남긴 피드백이 엉뚱한
+     화면에 섞여 들어온다." 예제를 복사만 하고 이름을 안 바꾸는 건 이 규약
+     위반이다.
+
+  ⟹ 아래 data-dash-id="REVIEW-CHANGE-ME" 를 그대로 두면, 저장 칸 이름을 이 파일이 놓인
+     위치(폴더 이름+파일 이름)로 자동으로 정한다. 복사본마다 놓인 자리가 다르면 저장 칸도
+     저절로 갈린다. 이름을 직접 정하고 싶을 때만 고유한 값으로 바꾼다(예: "my-report-figs-v1").
+     내보내기 파일 이름도 이 이름으로 시작한다.
+================================================================================
+-->
+<style>
+:root{
+  --bg:#f3f0ea; --card:#fffdf9; --card-2:#f6f2ea; --line:#e4ded2; --line-2:#ede8dd;
+  --ink:#211d17; --sub:#5c554b; --faint:#6f685c;
+  --accent:#a2372a;  --accent-ink:#8c2e22;
+  --link:#1b5a86;
+  --new:#2f6f4d;   --new-ink:#286042;
+  --warn:#a76a1c;  --warn-ink:#845413;
+  --info:#1a568a;
+  --check:#684a83;
+  --bg-new:#e7f0e9;   --br-new:#c2dcc9;
+  --bg-upd:#f6e6e2;   --br-upd:#e7c1b9;
+  --bg-keep:#efebe2;  --br-keep:#ddd6c9;
+  --bg-stale:#f6ecd6; --br-stale:#e6d3a8;
+  --bg-check:#eee8f2;  --br-check:#d6cae2;
+  --nav-1:#211d17; --nav-2:#2b2620; --masthead-rule:#a2372a;
+  --btn:#2b2620; --btn-hi:#3f382e;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:22px; --s6:30px; --s7:44px;
+  --r-lg:12px; --r-md:8px; --r-sm:5px;
+  --t-h1:32px; --t-kpi:22px; --t-fig:17px; --t-body:14px; --t-sm:12.5px; --t-cap:11px;
+  --panel-w:370px; --max-w:1720px;
+  --sans:-apple-system,BlinkMacSystemFont,"Pretendard Variable","Pretendard",
+         "Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  html[data-theme="auto"]{
+    --bg:#16130d; --card:#1d1a13; --card-2:#221e16; --line:#332e24; --line-2:#282318;
+    --ink:#ece5d9; --sub:#b0a692; --faint:#8f8779;
+    --accent:#e59a85; --accent-ink:#edad9b; --link:#7fb4dc;
+    --new:#66c79a; --new-ink:#77cfa7; --warn:#d8a84e; --warn-ink:#e0b566;
+    --info:#85b7df; --check:#b8a2d7;
+    --bg-new:#12301f; --br-new:#1d4a32; --bg-upd:#38201a; --br-upd:#5a3129;
+    --bg-keep:#232019; --br-keep:#38322a; --bg-stale:#332a14; --br-stale:#524023;
+    --bg-check:#241f38; --br-check:#3a3157;
+    --nav-1:#16130d; --nav-2:#211c14; --btn:#332c21; --btn-hi:#463d2e;
+  }
+}
+html[data-theme="dark"]{
+  --bg:#16130d; --card:#1d1a13; --card-2:#221e16; --line:#332e24; --line-2:#282318;
+  --ink:#ece5d9; --sub:#b0a692; --faint:#8f8779;
+  --accent:#e59a85; --accent-ink:#edad9b; --link:#7fb4dc;
+  --new:#66c79a; --new-ink:#77cfa7; --warn:#d8a84e; --warn-ink:#e0b566;
+  --info:#85b7df; --check:#b8a2d7;
+  --bg-new:#12301f; --br-new:#1d4a32; --bg-upd:#38201a; --br-upd:#5a3129;
+  --bg-keep:#232019; --br-keep:#38322a; --bg-stale:#332a14; --br-stale:#524023;
+  --bg-check:#241f38; --br-check:#3a3157;
+  --nav-1:#16130d; --nav-2:#211c14; --btn:#332c21; --btn-hi:#463d2e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.62;
+     font-family:var(--sans);letter-spacing:-.003em;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+a{color:var(--link)}
+:focus-visible{outline:2px solid var(--link);outline-offset:2px;border-radius:3px}
+.skip{position:absolute;left:-9999px;top:0;font-size:var(--t-sm);background:var(--card);color:var(--ink);
+      padding:10px 14px;border-radius:0 0 var(--r-md) 0;z-index:60}
+.skip:focus{left:0}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) var(--panel-w);gap:var(--s5);
+      max-width:var(--max-w);margin:0 auto;padding:var(--s5)}
+/* grid items default to min-width:auto (= content's min-content size), which for a
+   track holding a wide chart image overrides even minmax(0,...) track sizing in some
+   browsers — explicit min-width:0 is the standard fix so the image can actually shrink
+   below its intrinsic width on narrow/mobile screens instead of forcing horizontal overflow. */
+.wrap > main, .wrap > aside{min-width:0}
+
+.masthead{position:relative;padding:26px 2px 20px;margin-bottom:var(--s4);
+          border-top:3px solid var(--masthead-rule)}
+.mast-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.eyebrow{font-size:var(--t-cap);letter-spacing:.16em;text-transform:uppercase;
+         color:var(--accent-ink);font-weight:700;margin:0}
+.masthead h1{margin:0;font-size:var(--t-h1);font-weight:700;letter-spacing:-.02em;
+             line-height:1.22;color:var(--ink)}
+.masthead h1 .round{display:inline-block;vertical-align:middle;margin-left:11px;
+     font-size:var(--t-sm);font-weight:600;letter-spacing:0;color:var(--sub);
+     background:var(--card-2);border:1px solid var(--line);border-radius:20px;padding:3px 11px}
+.mast-sub{margin:9px 0 0;font-size:var(--t-body);color:var(--sub);max-width:78ch;line-height:1.55}
+.mast-sub b{color:var(--ink);font-weight:600}
+.kpis{display:flex;flex-wrap:wrap;margin-top:19px;border-top:1px solid var(--line);padding-top:16px}
+.kpi{padding-right:22px;margin-right:22px}
+.kpi+.kpi{padding-left:22px;border-left:1px solid var(--line)}
+.kpi .kpi-lab{display:block;font-size:var(--t-cap);letter-spacing:.05em;text-transform:uppercase;
+              color:var(--faint);font-weight:600;margin-bottom:5px}
+.kpi b{font-size:var(--t-kpi);font-weight:700;letter-spacing:-.02em;color:var(--ink);
+       font-variant-numeric:tabular-nums;display:block}
+.kpi .sub{font-size:var(--t-sm);color:var(--faint);font-weight:500;margin-left:5px}
+.theme-btn{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--sub);
+           border-radius:var(--r-md);padding:6px 11px;font:inherit;font-size:var(--t-sm);cursor:pointer}
+.theme-btn:hover{border-color:var(--sub);color:var(--ink)}
+
+.method{background:var(--card);border-top:1px solid var(--line);
+        padding:13px 20px;margin-bottom:var(--s5);font-size:var(--t-sm)}
+.method-sum{display:flex;flex-wrap:wrap;gap:5px 9px;align-items:baseline}
+.method-sum .k{color:var(--faint);font-size:var(--t-cap);letter-spacing:.08em;text-transform:uppercase;
+               font-weight:700;margin-right:3px}
+.method-sum .fact{color:var(--sub)} .method-sum .fact b{color:var(--ink);font-weight:600}
+.method-sum .dot{color:var(--faint);opacity:.5}
+
+.toc{background:var(--card);border-top:1px solid var(--line);
+     padding:var(--s4) var(--s5);margin-bottom:var(--s5);font-size:var(--t-sm);
+     position:sticky;top:0;z-index:20}
+.toc-row{display:flex;gap:var(--s2);align-items:baseline;flex-wrap:wrap}
+.toc-row+.toc-row{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.toc-lab{font-weight:700;color:var(--sub);white-space:nowrap;font-size:var(--t-cap);
+         letter-spacing:.1em;text-transform:uppercase;flex:0 0 auto}
+.toc-links{display:flex;flex-wrap:wrap;gap:2px 12px;min-width:0}
+.toc a{color:var(--link);text-decoration:none;white-space:nowrap;padding:1px 3px;border-radius:4px}
+.toc a:hover{text-decoration:underline}
+.toc a.on{background:var(--line-2);color:var(--ink);font-weight:700}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{font:inherit;font-size:var(--t-cap);padding:3px 10px 3px 11px;border-radius:16px;
+     border:1px solid var(--line);background:var(--card-2);color:var(--sub);cursor:pointer;
+     display:inline-flex;align-items:center;gap:6px}
+.filters button:hover{border-color:var(--sub)}
+.filters button .n{font-size:var(--t-cap);font-weight:700;opacity:.62;font-variant-numeric:tabular-nums}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.filters button[aria-pressed="true"] .n{opacity:.72}
+
+.sec-title{font-size:var(--t-cap);font-weight:700;color:var(--sub);margin:var(--s7) 0 var(--s4);
+           padding-bottom:8px;border-bottom:1px solid var(--line);letter-spacing:.12em;
+           text-transform:uppercase;display:flex;align-items:center;gap:9px}
+.sec-title::before{content:"";width:22px;height:3px;background:var(--sub);border-radius:2px;flex:0 0 auto}
+
+.filter-note{display:none;align-items:center;gap:10px;margin:0 0 16px;padding:9px 14px;
+     background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+     font-size:var(--t-sm);color:var(--sub)}
+.filter-note[data-on]{display:flex}
+.filter-note b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:700}
+.filter-note .fn-label{color:var(--sub)}
+.filter-note button{font:inherit;font-size:var(--t-sm);color:var(--link);background:none;border:0;
+     cursor:pointer;padding:2px 4px;text-decoration:underline;margin-left:auto;white-space:nowrap}
+.filter-note button:hover{color:var(--ink)}
+
+.fig{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+     padding:var(--s5) var(--s5);margin-bottom:16px;scroll-margin-top:92px}
+.fig[hidden]{display:none}
+.fig-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:var(--s1);flex-wrap:wrap}
+.fig-title{font-size:var(--t-fig);font-weight:700;margin:0;line-height:1.35;letter-spacing:-.01em}
+.tag{font-size:var(--t-cap);padding:3px 9px;border-radius:14px;font-weight:600;white-space:nowrap;
+     line-height:1.5;align-self:center;letter-spacing:.01em}
+.tag::before{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;margin-right:3px}
+.t-new::before{content:"＋"}
+.t-new{background:var(--bg-new);color:var(--new-ink);border:1px solid var(--br-new)}
+.t-upd{background:var(--bg-upd);color:var(--new-ink);border:1px solid var(--br-upd)}
+.t-keep{background:var(--bg-keep);color:var(--new-ink);border:1px solid var(--br-keep)}
+.t-stale{background:var(--bg-stale);color:var(--new-ink);border:1px solid var(--br-stale)}
+.t-check{background:var(--bg-check);color:var(--new-ink);border:1px solid var(--br-check)}
+.fb-btn{margin-left:auto;align-self:center;font:inherit;font-size:var(--t-cap);
+        padding:4px 12px;border-radius:14px;border:1px solid var(--line);
+        background:var(--card-2);color:var(--sub);cursor:pointer;white-space:nowrap}
+.fb-btn:hover{border-color:var(--link);color:var(--link)}
+.fig-desc{color:var(--sub);font-size:var(--t-body);margin:2px 0 var(--s3)}
+.fig-media{margin:0}
+.fig-media a{display:block;position:relative}
+.fig img{width:100%;border:1px solid var(--line);border-radius:var(--r-md);background:#fff;display:block}
+.fig-media a::after{content:"확대";position:absolute;right:10px;bottom:10px;
+     background:rgba(33,29,23,.74);color:#faf7f1;font-size:var(--t-cap);padding:3px 8px;
+     border-radius:12px;opacity:0;transition:opacity .15s}
+.fig-media a:hover::after,.fig-media a:focus-visible::after{opacity:1}
+.fig-placeholder{border:1px dashed var(--line);border-radius:var(--r-md);
+     padding:40px 20px;text-align:center;color:var(--faint);font-size:var(--t-sm);
+     background:var(--card-2)}
+
+.pts{margin:var(--s3) 0 0;padding:0;list-style:none;font-size:var(--t-body)}
+.pts li{margin:7px 0;padding-left:20px;position:relative}
+.pts li::before{content:"–";position:absolute;left:6px;color:var(--sub)}
+.pts li.box{padding-left:22px;font-weight:600}
+.pts li.box::before{content:"□";left:2px;color:var(--ink)}
+.pts li.arw{padding-left:28px;color:var(--info);font-weight:600}
+.pts li.arw::before{content:"(→)";left:0;color:var(--info);font-weight:700;font-size:var(--t-sm)}
+.pts li.cav{padding-left:22px;color:var(--warn-ink)}
+.pts li.cav::before{content:"⚠";left:2px;color:var(--warn)}
+.pts b{color:var(--accent-ink)}
+.src{margin:var(--s3) 0 0;font-size:var(--t-cap);color:var(--faint);
+     border-top:1px dashed var(--line);padding-top:9px}
+
+.panel{position:sticky;top:var(--s5);align-self:start;background:var(--card);
+       border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;
+       max-height:calc(100vh - 44px);display:flex;flex-direction:column}
+.panel h2{margin:0 0 var(--s1);font-weight:700;font-size:var(--t-fig);letter-spacing:-.01em;
+          display:flex;align-items:center;gap:var(--s2)}
+.count{margin-left:auto;font-size:var(--t-sm);font-weight:600;color:var(--sub);font-family:inherit;
+       background:var(--card-2);border:1px solid var(--line);border-radius:14px;padding:1px 9px}
+.panel .hint{font-size:var(--t-sm);color:var(--sub);margin-bottom:var(--s3)}
+label.f{display:block;font-size:var(--t-cap);letter-spacing:.06em;text-transform:uppercase;
+        color:var(--sub);font-weight:600;margin-bottom:var(--s1)}
+select,textarea{width:100%;font:inherit;font-size:var(--t-sm);border:1px solid var(--line);
+       border-radius:var(--r-md);padding:9px 10px;background:var(--card-2);color:var(--ink)}
+textarea{min-height:96px;resize:vertical;margin-top:var(--s2);line-height:1.55}
+.btn{margin-top:9px;width:100%;padding:10px;border:0;border-radius:var(--r-md);
+     background:var(--btn);color:#faf7f1;font:inherit;font-weight:600;font-size:var(--t-body);cursor:pointer}
+.btn:hover{background:var(--btn-hi)}
+.btn-export{background:var(--new)}
+.btn-export:hover{filter:brightness(1.12)}
+.btn-ghost{background:none;color:var(--sub);border:1px solid var(--line);font-weight:500;
+           font-size:var(--t-sm);padding:7px;margin-top:6px}
+.btn-ghost:hover{background:var(--card-2);color:var(--ink)}
+.export-hint{font-size:var(--t-cap);color:var(--sub);margin-top:var(--s2);line-height:1.55;
+     background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px}
+.fb-list{margin-top:var(--s3);overflow-y:auto;flex:1;min-height:80px}
+.fb{background:var(--card-2);border:1px solid var(--line);border-radius:var(--r-md);
+    padding:10px 11px;margin-bottom:var(--s2);font-size:var(--t-sm);position:relative}
+.fb .fig-ref{font-weight:700;color:var(--link);font-size:var(--t-sm);padding-right:52px}
+.fb .txt{white-space:pre-wrap;margin-top:2px;word-break:break-word}
+.fb .time{color:var(--faint);font-size:var(--t-cap);position:absolute;right:30px;top:10px}
+.fb .del{position:absolute;right:8px;top:6px;cursor:pointer;color:var(--faint);
+    font-weight:700;background:none;border:0;font-size:var(--t-body);line-height:1;padding:2px 4px}
+.fb .del:hover{color:var(--accent)}
+.empty{color:var(--faint);font-size:var(--t-sm);text-align:center;padding:22px 0}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:70;
+   background:var(--nav-1);color:#faf7f1;padding:11px 18px;border-radius:var(--r-md);
+   font-size:var(--t-sm);box-shadow:0 4px 18px rgba(0,0,0,.25);max-width:min(92vw,560px)}
+.toast[hidden]{display:none}
+noscript .export-hint{border-color:var(--br-stale);background:var(--bg-stale)}
+
+.lb{position:fixed;inset:0;z-index:80;background:rgba(22,19,13,.92);display:flex;
+    flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:12px}
+.lb[hidden]{display:none}
+.lb img{max-width:96vw;max-height:86vh;border-radius:var(--r-md);background:#fff}
+.lb .cap{color:#ece5d9;font-size:var(--t-sm);text-align:center}
+.lb .close{position:absolute;top:16px;right:20px;background:rgba(233,199,154,.14);
+    border:1px solid rgba(233,199,154,.3);color:#faf7f1;border-radius:var(--r-md);
+    padding:6px 12px;font:inherit;font-size:var(--t-sm);cursor:pointer}
+
+@media (max-width:1180px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  .panel{position:static;max-height:none;order:2}
+  .toc{position:static}
+}
+@media (max-width:720px){
+  :root{--t-h1:26px;--t-fig:16px}
+  .wrap{padding:var(--s3);gap:var(--s3)}
+  .masthead{padding:20px 0 16px}
+  .masthead h1 .round{margin-left:0;margin-top:8px}
+  .kpi{margin-right:14px}
+  .kpi+.kpi{padding-left:14px}
+  .summary,.fig{padding:var(--s4)}
+  .toc-lab{flex-basis:100%}
+}
+@media print{
+  :root{--bg:#fff;--card:#fff;--line:#ccc6ba}
+  body{background:#fff}
+  .wrap{display:block;max-width:none;padding:0}
+  .panel,.filters,.theme-btn,.fb-btn,.toast,.lb,.skip,.filter-note{display:none !important}
+  .toc{position:static;page-break-after:always}
+  .fig{break-inside:avoid;page-break-inside:avoid;border-color:#ccc6ba}
+  .fig img{max-height:15cm;object-fit:contain}
+  .masthead{border-top-color:#a2372a}
+  .fig[hidden]{display:block}
+}
+</style>
+</head>
+
+<body data-dash-id="REVIEW-CHANGE-ME"
+      data-doc-title="[검토 대상 제목을 여기에]"
+      data-basis="기준: [이 검토의 근거를 한 줄로 — 예: 데이터 버전 · 생성 날짜]"
+      data-feedback-dir="feedback/"
+      data-self-path="review.html">
+<!-- data-dash-id 를 그대로 두면 파일 위치로 저장 칸 이름이 자동으로 정해진다 — 위 파일 상단 안내 참고. -->
+
+<a class="skip" href="#main">본문 바로가기</a>
+
+<div class="wrap">
+<main id="main">
+
+  <header class="masthead">
+    <div class="mast-top">
+      <p class="eyebrow">그림 검토</p>
+    </div>
+    <h1>[검토 대상 제목]<span class="round">리뷰 대기</span></h1>
+    <p class="mast-sub">[이 화면에서 무엇을 검토하는지, 검토자가 무엇을 하면 되는지 한두 문장으로.
+      예: 아래 그림들을 보고, 이상하거나 고칠 점이 있으면 그림별 "피드백" 버튼을 눌러
+      오른쪽 패널에 남겨 보라.]</p>
+    <div class="kpis">
+      <!-- 카드를 추가/삭제하면 이 숫자도 손으로 맞춘다(자동 집계 아님 — 원본과 동일한 방식). -->
+      <div class="kpi"><span class="kpi-lab">그림 수</span><b>1개</b></div>
+      <div class="kpi"><span class="kpi-lab">리뷰 상태</span><b>리뷰 대기</b></div>
+      <div class="kpi"><span class="kpi-lab">데이터 성격</span><b>[예: 실측 / 합성]</b></div>
+    </div>
+  </header>
+
+  <section class="method" aria-label="방법론·기준">
+    <div class="method-sum">
+      <span class="k">기준</span>
+      <span class="fact">[데이터 출처 · 버전 · 시점 등 이 검토의 근거를 짧게]</span>
+    </div>
+  </section>
+
+  <nav class="toc" aria-label="그림 바로가기">
+    <div class="toc-row">
+      <span class="toc-lab">바로가기</span>
+      <div class="toc-links" id="tocLinks"></div>
+    </div>
+    <div class="toc-row">
+      <span class="toc-lab">상태 필터</span>
+      <div class="filters" id="filters"></div>
+    </div>
+  </nav>
+
+  <p class="filter-note" id="filterNote" role="status" aria-live="polite">
+    <b id="filterNoteN">0</b><span class="fn-label">건만 표시 중 · 나머지는 상태 필터로 가려졌습니다.</span>
+    <button type="button" id="filterClear">전체 보기</button>
+  </p>
+
+  <h2 class="sec-title" id="sec-main">본론 (Main)</h2>
+
+  <!-- 카드 견본 1장 — 실제로 검토할 그림 수만큼 이 <article class="fig">...</article>
+       블록을 통째로 복사해서 늘린다. 각 article의 id는 서로 달라야 한다(f1, f2, f3 ...).
+
+       상태 배지 선택지: t-new(신규)·t-upd(갱신)·t-keep(변경없음)·t-stale(미갱신)·t-check(확인필요)
+       data-status 값도 함께 맞춘다: new / upd / keep / stale / check
+       (상단 "상태 필터" 버튼과 KPI는 이 값들을 자동으로 읽어 만들어진다.) -->
+  <article class="fig" id="f1" data-fig="Fig 1 — [그림 제목]" data-status="new">
+    <div class="fig-head">
+      <h3 class="fig-title">Fig 1. [그림 제목]</h3>
+      <span class="tag t-new">신규</span>
+      <button class="fb-btn" type="button" data-fb>피드백</button>
+    </div>
+    <p class="fig-desc">[이 그림이 무엇을 보여주는지 한 줄 설명]</p>
+    <figure class="fig-media">
+      <!-- 실제 그림이 준비되면 아래 placeholder 를 이 형태로 바꾼다(원본 예제와 동일한 구조):
+      <a href="figures/fig1.png">
+        <img src="figures/fig1.png" alt="[그림 대체 텍스트 — 무엇을 보여주는 그림인지]" loading="lazy">
+      </a>
+      -->
+      <div class="fig-placeholder">[ 여기에 그림을 넣는다 ]</div>
+    </figure>
+    <ul class="pts">
+      <li class="box">요지 — [이 그림이 한 문장으로 말하는 것]</li>
+      <li>근거 — [뒷받침하는 관찰·수치. 넷을 넘어가면 그림 자체를 쪼갤 때다]</li>
+      <li class="arw">결론 — [그래서 무엇을 말하는가]</li>
+      <!-- 한계는 선택이다 — 있으면 마지막에만 넣는다(6장 3절: "한계는 있으면 마지막이다").
+           필요할 때만 아래 주석을 풀어 쓴다:
+      <li class="cav">한계 — [이 결과가 어디까지만 유효한가]</li>
+      -->
+    </ul>
+    <p class="src">[생성 시점 · 데이터 버전 등 출처 한 줄]</p>
+  </article>
+
+</main>
+
+<aside class="panel" aria-label="그림별 피드백">
+  <h2>그림별 피드백 <span class="count" id="fbCount">0건</span></h2>
+  <div class="hint">고칠 점을 남기면 그림별로 반영합니다. 브라우저에 저장되며, 내보낸 md를 읽고 수정합니다.</div>
+
+  <label class="f" for="figSel">대상 그림</label>
+  <select id="figSel"><option>전체 / 흐름 · 스토리</option></select>
+
+  <label class="f" for="fbText" style="margin-top:8px">피드백 (Cmd/Ctrl+Enter 로 추가)</label>
+  <textarea id="fbText" placeholder="예) Fig 1 — 막대 높이가 실제 차이보다 훨씬 커 보입니다."></textarea>
+
+  <button class="btn" type="button" id="btnAdd">피드백 추가</button>
+  <button class="btn btn-export" type="button" id="btnExport">반영 요청 (md 내보내기)</button>
+  <button class="btn btn-ghost" type="button" id="btnCopy">md 클립보드로 복사 (내보내기 대신)</button>
+
+  <div class="export-hint">내보내면 <code>Downloads</code>에 md 파일이 저장되고 목록은 그대로 남습니다.
+    그 파일을 <code id="fbDir">feedback/</code> 에 넣거나 "반영해줘"라고 알려주시면
+    읽고 그림별로 수정합니다.</div>
+
+  <noscript>
+    <div class="export-hint">JavaScript가 꺼져 있어 피드백 입력·내보내기는 동작하지 않습니다.
+      그림과 해석은 그대로 보입니다.</div>
+  </noscript>
+
+  <div class="fb-list" id="fbList"><div class="empty">아직 피드백이 없습니다.</div></div>
+</aside>
+</div>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="그림 확대">
+  <button class="close" type="button" id="lbClose">닫기 (Esc)</button>
+  <img id="lbImg" alt="">
+  <div class="cap" id="lbCap"></div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+  "use strict";
+  var body  = document.body;
+  // 자리표시자를 그대로 두면 파일 위치(폴더 이름+파일 이름)로 저장 칸 이름을 정한다.
+  //   복사본마다 위치가 다르니 저장 칸이 저절로 갈린다. 직접 정하고 싶으면 data-dash-id 를 바꾼다.
+  var DASH  = body.dataset.dashId;
+  if(!DASH || DASH === 'REVIEW-CHANGE-ME'){
+    var segs = decodeURIComponent(location.pathname).split('/').filter(Boolean).slice(-2);
+    DASH = segs.join('-').replace(/\.html?$/i, '').replace(/[^0-9A-Za-z가-힣_-]+/g, '-') || 'review';
+  }
+  var KEY   = 'dashfb__' + DASH;
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.fig'));
+  var $     = function(id){ return document.getElementById(id); };
+  var up = function(ev, sel){
+    var t = ev.target;
+    return (t && t.closest) ? t.closest(sel) : null;
+  };
+
+  var tocLinks = $('tocLinks');
+  if(tocLinks) cards.forEach(function(c){
+    var a = document.createElement('a');
+    a.href = '#' + c.id;
+    a.textContent = (c.dataset.fig || c.id).split('—')[0].trim();
+    a.title = c.dataset.fig || '';
+    tocLinks.appendChild(a);
+  });
+  var STATUS = {new:'신규', upd:'갱신', keep:'변경없음', stale:'미갱신', check:'확인필요'};
+  var filterBox = $('filters');
+  var fNote = $('filterNote'), fNoteN = $('filterNoteN'), fClear = $('filterClear');
+  function applyFilter(f){
+    var shown = 0;
+    cards.forEach(function(c){
+      var on = (f === 'all' || c.dataset.status === f);
+      c.hidden = !on; if(on) shown++;
+    });
+    if(filterBox) Array.prototype.forEach.call(filterBox.children, function(x){
+      x.setAttribute('aria-pressed', String(x.dataset.filter === f));
+    });
+    if(fNote){
+      if(f === 'all'){ fNote.removeAttribute('data-on'); }
+      else { if(fNoteN) fNoteN.textContent = shown; fNote.setAttribute('data-on', ''); }
+    }
+  }
+  if(filterBox){
+    var present = ['all'].concat(Object.keys(STATUS).filter(function(k){
+      return cards.some(function(c){ return c.dataset.status === k; });
+    }));
+    present.forEach(function(k){
+      var n = k === 'all' ? cards.length
+                          : cards.filter(function(c){ return c.dataset.status === k; }).length;
+      var b = document.createElement('button');
+      b.type = 'button'; b.dataset.filter = k;
+      b.appendChild(document.createTextNode((k === 'all' ? '전체' : STATUS[k]) + ' '));
+      var s = document.createElement('span'); s.className = 'n'; s.textContent = n;
+      b.appendChild(s);
+      b.setAttribute('aria-pressed', String(k === 'all'));
+      filterBox.appendChild(b);
+    });
+    filterBox.addEventListener('click', function(ev){
+      var b = up(ev, 'button[data-filter]'); if(!b) return;
+      applyFilter(b.dataset.filter);
+    });
+  }
+  if(fClear) fClear.addEventListener('click', function(){ applyFilter('all'); });
+
+  if(window.IntersectionObserver && tocLinks){
+    var links = {};
+    Array.prototype.forEach.call(tocLinks.children, function(a){ links[a.getAttribute('href').slice(1)] = a; });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        var a = links[en.target.id]; if(!a) return;
+        if(en.isIntersecting){
+          Array.prototype.forEach.call(tocLinks.children, function(x){ x.classList.remove('on'); });
+          a.classList.add('on');
+        }
+      });
+    }, {rootMargin:'-96px 0px -70% 0px', threshold:0});
+    cards.forEach(function(c){ io.observe(c); });
+  }
+
+  var lb = $('lb'), lbImg = $('lbImg'), lbCap = $('lbCap'), lastFocus = null;
+  function closeLb(){ if(!lb) return; lb.hidden = true; lbImg.removeAttribute('src');
+                      if(lastFocus) lastFocus.focus(); }
+  document.addEventListener('click', function(ev){
+    var a = up(ev, 'a[data-zoom]');
+    if(!a || !lb) return;
+    ev.preventDefault();
+    lastFocus = a;
+    lbImg.src = a.getAttribute('href');
+    var card = a.closest('.fig');
+    lbCap.textContent = card ? (card.dataset.fig || '') : '';
+    lbImg.alt = lbCap.textContent;
+    lb.hidden = false;
+    $('lbClose').focus();
+  });
+  if(lb){
+    lb.addEventListener('click', function(ev){ if(ev.target === lb || ev.target.id === 'lbClose') closeLb(); });
+    document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && !lb.hidden) closeLb(); });
+  }
+
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch(e){ return []; } }
+  function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){
+    toast('브라우저 저장에 실패했습니다. 내보내기로 먼저 보관하세요.'); } }
+
+  var sel = $('figSel'), txt = $('fbText'), list = $('fbList'), cnt = $('fbCount');
+  var ALL = '전체 / 흐름 · 스토리';
+
+  if(sel){
+    sel.innerHTML = '';
+    cards.forEach(function(c){
+      var o = document.createElement('option');
+      o.value = c.dataset.fig || c.id; o.textContent = o.value; sel.appendChild(o);
+    });
+    var oAll = document.createElement('option');
+    oAll.value = ALL; oAll.textContent = ALL; sel.appendChild(oAll);
+  }
+  var fbDir = $('fbDir');
+  if(fbDir && body.dataset.feedbackDir) fbDir.textContent = body.dataset.feedbackDir;
+
+  function stamp(d, readable){
+    var p = function(n){ return String(n).padStart(2,'0'); };
+    return readable
+      ? d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())
+      : ''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+  }
+  function toast(msg, ms){
+    var t = $('toast'); if(!t){ return; }
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(function(){ t.hidden = true; }, ms || 4200);
+  }
+
+  function render(){
+    var a = load();
+    if(cnt) cnt.textContent = a.length + '건';
+    if(!list) return;
+    list.textContent = '';
+    if(!a.length){
+      var e = document.createElement('div');
+      e.className = 'empty'; e.textContent = '아직 피드백이 없습니다.';
+      list.appendChild(e); return;
+    }
+    a.forEach(function(x, i){
+      var d = document.createElement('div'); d.className = 'fb';
+      var del = document.createElement('button');
+      del.type = 'button'; del.className = 'del'; del.textContent = '×';
+      del.setAttribute('aria-label', '삭제');
+      del.addEventListener('click', function(){ var b = load(); b.splice(i,1); save(b); render(); });
+      var tm = document.createElement('span'); tm.className = 'time'; tm.textContent = x.time;
+      var rf = document.createElement('div'); rf.className = 'fig-ref'; rf.textContent = x.fig;
+      var tx = document.createElement('div'); tx.className = 'txt'; tx.textContent = x.txt;
+      d.appendChild(del); d.appendChild(tm); d.appendChild(rf); d.appendChild(tx);
+      list.appendChild(d);
+    });
+  }
+
+  function addFb(){
+    if(!txt || !txt.value.trim()){ toast('내용을 입력하세요.'); return; }
+    var a = load();
+    a.unshift({fig: sel ? sel.value : ALL, txt: txt.value.trim(), time: stamp(new Date(), true).slice(5)});
+    save(a); txt.value = ''; render();
+  }
+  if($('btnAdd')) $('btnAdd').addEventListener('click', addFb);
+  if(txt) txt.addEventListener('keydown', function(ev){
+    if((ev.metaKey || ev.ctrlKey) && ev.key === 'Enter') addFb();
+  });
+
+  document.addEventListener('click', function(ev){
+    var b = up(ev, '[data-fb]'); if(!b) return;
+    var card = b.closest('.fig'); if(!card || !sel) return;
+    sel.value = card.dataset.fig || card.id;
+    if(txt){ txt.focus(); txt.scrollIntoView({block:'nearest'}); }
+  });
+
+  function buildMd(a){
+    var now = new Date();
+    var order = cards.map(function(c){ return c.dataset.fig || c.id; }).concat([ALL]);
+    var groups = {};
+    a.slice().reverse().forEach(function(x){ (groups[x.fig] = groups[x.fig] || []).push(x); });
+
+    var md = '# 피드백 — ' + (body.dataset.docTitle || document.title) + '\n\n';
+    md += '- **반영 요청 시각**: ' + stamp(now, true) + '\n';
+    md += '- **총 피드백**: ' + a.length + '건\n';
+    if(body.dataset.basis)    md += '- **대상 기준**: ' + body.dataset.basis + '\n';
+    if(body.dataset.selfPath) md += '- **대시보드**: ' + body.dataset.selfPath + '\n';
+    md += '\n---\n';
+
+    function emit(k){
+      md += '\n## ' + k + '\n\n';
+      groups[k].forEach(function(x){ md += '- ' + x.txt + '  \n  <sub>' + x.time + '</sub>\n'; });
+    }
+    order.forEach(function(k){ if(groups[k]) emit(k); });
+    Object.keys(groups).forEach(function(k){ if(order.indexOf(k) < 0) emit(k); });
+    return {md: md, name: DASH + '-feedback-' + stamp(now, false) + '.md'};
+  }
+
+  // ★2026-09-27 — 옛 코드는 <a download> 를 누르고 **성공 여부와 무관하게 save([]) 로 목록을 비웠다.**
+  //   다운로드가 막히는 자리(뷰어 안, 권한 거부)에서는 파일도 안 남고 목록만 사라진다.
+  //   같은 형태로 2026-08-30·09-26에 실제로 피드백이 날아갔다.
+  //   ⟹ ⑴저장 능력이 있으면 그걸로 ⑵없으면 브라우저 기본 저장 ⑶그것도 막히면 클립보드.
+  //   ⚠️어느 경로에서도 목록을 자동으로 비우지 않는다. 지우기는 사람이 항목마다 직접 한다.
+  if($('btnExport')) $('btnExport').addEventListener('click', async function(){
+    var a = load();
+    if(!a.length){ toast('내보낼 피드백이 없습니다.'); return; }
+    var out = buildMd(a);
+
+    var dl = null;
+    try{ dl = (window.claude && claude.use) ? await claude.use('downloads') : null; }catch(e){ dl = null; }
+    if(dl && dl.save){
+      try{
+        await dl.save({filename: out.name, data: out.md});
+        render();
+        toast('파일로 저장했습니다: ' + out.name + '. 목록은 그대로 둡니다 - ' +
+              (body.dataset.feedbackDir || 'feedback/') + ' 에 넣거나 "반영해줘"라고 알려주세요.', 8000);
+      }catch(e){
+        toast('저장이 취소되었거나 실패했습니다. 목록은 그대로 둡니다.', 7000);
+      }
+      return;
+    }
+
+    try{
+      var blob = new Blob([out.md], {type:'text/markdown;charset=utf-8'});
+      var url  = URL.createObjectURL(blob);
+      var el   = document.createElement('a');
+      el.href = url; el.download = out.name;
+      document.body.appendChild(el); el.click();
+      setTimeout(function(){ URL.revokeObjectURL(url); el.remove(); }, 1000);
+      render();
+      toast('내보냈습니다: ' + out.name + ' - Downloads에 저장됨. 목록은 그대로 둡니다 - ' +
+            (body.dataset.feedbackDir || 'feedback/') + ' 에 넣거나 "반영해줘"라고 알려주세요.', 8000);
+      return;
+    }catch(e){ /* 아래 클립보드로 */ }
+
+    var keep = function(){
+      toast('이 화면에서는 파일 저장이 막혀 있어 클립보드로 복사했습니다. ' +
+            '목록은 지우지 않았습니다 - 붙여넣어 보관하세요.', 8000);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.md).then(keep, keep);
+    } else { keep(); }
+  });
+
+  if($('btnCopy')) $('btnCopy').addEventListener('click', function(){
+    var a = load();
+    if(!a.length){ toast('복사할 피드백이 없습니다.'); return; }
+    var out = buildMd(a);
+    var done = function(){ toast('클립보드에 복사했습니다. (목록은 유지 — 붙여넣은 뒤 내보내기/삭제)'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.md).then(done, fallback);
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = out.md; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }
+      catch(e){ toast('복사에 실패했습니다. 내보내기를 사용하세요.'); }
+      document.body.removeChild(ta);
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

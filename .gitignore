@@ -1,0 +1,5 @@
+# 점검·도구가 만들어 내는 것. 저장소에 올리지 않는다.
+.harness/
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,4 @@
+「데이터를 다루는 사람들을 위한 하네스 엔지니어링」 스타터 저장소를 받으려고 해.
+주소는 https://github.com/publickanghyunsong-droid/harness-starter 이고, 지금 이 폴더에 그대로 git clone 해 줘.
+받은 다음 harness/ harness.toml canaries.json hooks/ preflight/ tests/ .claude/ AGENTS.md
+여덟 개가 이 폴더 안에 있는지 ls로 확인해서 보여 줘.

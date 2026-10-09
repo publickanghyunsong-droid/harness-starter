@@ -1,0 +1,18 @@
+{
+  "$comment": "이 파일이 훅을 실제로 물리는 자리다. 훅 스크립트가 hooks/ 에 있는 것과, 그것이 실제로 걸려 있는 것은 다른 사건이다 — 이 파일이 없으면 block_git_push.sh 는 디스크에만 있고 아무것도 막지 않는다. 배선 여부는 tests/test_hook_wiring.sh 가 잰다.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/block_git_push.sh\"",
+            "timeout": 10,
+            "statusMessage": "push 게이트 확인"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+harness.toml에서 # log_file = "docs/log.md" 줄 앞의 #을 지우고 점검 다시 돌려줘.
