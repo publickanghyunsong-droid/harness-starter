@@ -82,6 +82,14 @@ scan_procs() {   # $1=정규식 → 자기 자신·부모를 뺀 PID 목록(공�
 show_procs() {   # $1=PID 목록  $2=꼬리표
   ps -o pid,ppid,lstart,command -p "${1// /,}" 2>/dev/null | cut -c1-150 | sed "s/^/    [$2] /"
 }
+# ★프로세스 목록을 못 읽는 환경(샌드박스 등)에서는 pgrep 이 오류로 끝나는데, 그 오류를 삼키면
+#   "못 읽었다"가 "0건"으로 둔갑해 거짓 GO가 난다. 조회 자체가 되는지 먼저 본다.
+#   pgrep 종료코드: 0=찾음 / 1=없음 / 2 이상=조회 실패(명령 없음 127 포함).
+PROC_UNREADABLE=0
+if [ -n "$PROC_PATTERNS$LIGHT_PROC_PATTERNS" ]; then
+  pgrep -f "zzz_preflight_probe_$$" >/dev/null 2>&1
+  [ $? -ge 2 ] && PROC_UNREADABLE=1
+fi
 HEAVY_PIDS=$(scan_procs "$PROC_PATTERNS")
 LIGHT_RAW=$(scan_procs "$LIGHT_PROC_PATTERNS")
 # ★같은 프로세스가 양쪽에 걸리면 **무거운 쪽이 이긴다**(안전한 방향으로 접는다).
@@ -95,6 +103,8 @@ NBUSY_LIGHT=$(echo "$LIGHT_PIDS" | wc -w | tr -d ' ')
 if [ -z "$PROC_PATTERNS" ] && [ -z "$LIGHT_PROC_PATTERNS" ]; then
   echo "    (미설정 - harness.toml [preflight].process_patterns / light_process_patterns)"
   echo "    ⚠️미설정이면 이 항목은 **판정에 아무 영향도 못 준다.** 자기 프로젝트의 긴 작업 이름을 넣어라."
+elif [ "$PROC_UNREADABLE" -eq 1 ]; then
+  echo "    ⚠️측정 불가: 프로세스 목록을 읽지 못했다(pgrep 조회 실패). 0건이 아니다"
 elif [ "$NBUSY_HEAVY" -eq 0 ] && [ "$NBUSY_LIGHT" -eq 0 ]; then
   echo "    없음"
 else
@@ -168,6 +178,11 @@ echo "    ↑ 압력이 해소돼도 스왑은 즉시 회수되지 않아 누적
 echo "      초판이 이 값을 단독 문턱으로 써서 무거운 작업 직후엔 항상 NO-GO였다."
 
 echo
+if [ "$PROC_UNREADABLE" -eq 1 ]; then
+  echo "════ 판정: ⚠️ 측정 불가: GO/NO-GO를 말할 수 없다(exit 2) ════"
+  echo "    경쟁 작업을 확인하지 못했다. 프로세스 조회가 되는 터미널에서 다시 돌리거나 수동으로 확인하라."
+  exit 2
+fi
 if [ -z "${PLEVEL:-}" ] && [ "${FREEPCT}" = "-1" ] && [ "${SWRATE}" = "-1" ]; then
   echo "════ 판정: ⚠️ 측정 불가: GO/NO-GO를 말할 수 없다(exit 2) ════"
   echo "    지표를 하나도 못 읽었다. 이 OS용 분기를 추가하거나 수동으로 확인하라."

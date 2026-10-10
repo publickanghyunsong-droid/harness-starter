@@ -27,6 +27,18 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PF="$ROOT/preflight/preflight_load_check.sh"
 VERBOSE=${1:-}
 PASS=0; FAIL=0
+
+# ★이 묶음은 진짜 프로세스를 띄워 pgrep 으로 찾는다. 프로세스 목록을 못 읽는 환경(일부 에이전트
+#   샌드박스)에서는 잴 수 없다. 그럴 때 항목마다 따로 실패시키지 않고 이유를 한 번 밝히고 멈춘다.
+#   측정 불가는 통과가 아니므로 PASS 로 세지 않는다.
+pgrep -f "zzz_preflight_test_probe_$$" >/dev/null 2>&1
+if [ $? -ge 2 ]; then
+  echo "  측정 불가: 이 환경은 프로세스 목록을 읽지 못한다(pgrep 조회 실패)."
+  echo "            이 묶음은 프로세스 조회가 되는 일반 터미널에서 돌려라."
+  echo
+  echo "결과: PASS 0 · FAIL 1"
+  exit 1
+fi
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
@@ -164,6 +176,18 @@ check "1" "경고 + 가벼운 경쟁 작업 → NO-GO" \
 # ★④ 측정 불가는 경쟁 작업이 없어도 통과가 아니다(exit 2 유지 — D절 완화가 여기 번지면 안 된다).
 check "2" "측정 불가 + 경쟁 0 → 여전히 exit 2" \
       HARNESS_OS=Plan9 HARNESS_SAMPLE_SEC=1 "${NOPROC[@]}"
+
+# ★⑤ 프로세스 목록을 못 읽으면 "0건"이 아니라 측정 불가다(샌드박스에서 거짓 GO가 나던 자리).
+#    pgrep 을 조회 실패(exit 3)로 끝나는 가짜로 바꿔 끼워, 지표가 완벽해도 exit 2 인지 본다.
+mkdir -p "$TMP/stub"
+printf '#!/bin/sh\necho "Cannot get process list" >&2\nexit 3\n' > "$TMP/stub/pgrep"
+chmod +x "$TMP/stub/pgrep"
+check "2" "프로세스 조회 실패 → 지표가 완벽해도 측정 불가" \
+      PATH="$TMP/stub:$PATH" HARNESS_OS=Linux HARNESS_PROC_ROOT="$TMP/ok" HARNESS_SAMPLE_SEC=1 \
+      HARNESS_PROC_PATTERNS="$MARK_H" HARNESS_LIGHT_PROC_PATTERNS="$MARK_L"
+fire "프로세스 조회 실패는 0건으로 적지 않는다" "프로세스 목록을 읽지 못했다" \
+      PATH="$TMP/stub:$PATH" HARNESS_OS=Linux HARNESS_PROC_ROOT="$TMP/ok" HARNESS_SAMPLE_SEC=1 \
+      HARNESS_PROC_PATTERNS="$MARK_H" HARNESS_LIGHT_PROC_PATTERNS="$MARK_L"
 
 kill $PID_H $PID_L 2>/dev/null; wait $PID_H $PID_L 2>/dev/null
 trap 'rm -rf "$TMP"' EXIT
