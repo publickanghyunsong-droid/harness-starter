@@ -77,7 +77,11 @@ echo "[3] 실행 중인 경쟁 작업: ★★판정 근거 (무거운 것=즉시
 # ⚠️패턴 목록은 stale해진다 — 새 장기 스크립트를 만들면 harness.toml 에 **반드시 추가**할 것.
 scan_procs() {   # $1=정규식 → 자기 자신·부모를 뺀 PID 목록(공백 구분)
   [ -z "${1:-}" ] && return 0
-  pgrep -f "$1" 2>/dev/null | grep -vx -e "$$" -e "${PPID:-0}" | tr '\n' ' '
+  local out rc
+  out=$(pgrep -f "$1" 2>/dev/null); rc=$?
+  # 조회 자체가 실패하면(2 이상) 빈 목록이 아니라 실패 표식을 돌려준다. 삼키면 0건으로 읽힌다.
+  [ $rc -ge 2 ] && { echo "__PGREP_FAILED__"; return 0; }
+  printf '%s\n' "$out" | grep -vx -e "$$" -e "${PPID:-0}" | tr '\n' ' '
 }
 show_procs() {   # $1=PID 목록  $2=꼬리표
   ps -o pid,ppid,lstart,command -p "${1// /,}" 2>/dev/null | cut -c1-150 | sed "s/^/    [$2] /"
@@ -92,6 +96,7 @@ if [ -n "$PROC_PATTERNS$LIGHT_PROC_PATTERNS" ]; then
 fi
 HEAVY_PIDS=$(scan_procs "$PROC_PATTERNS")
 LIGHT_RAW=$(scan_procs "$LIGHT_PROC_PATTERNS")
+case "$HEAVY_PIDS$LIGHT_RAW" in *__PGREP_FAILED__*) PROC_UNREADABLE=1; HEAVY_PIDS=""; LIGHT_RAW="" ;; esac
 # ★같은 프로세스가 양쪽에 걸리면 **무거운 쪽이 이긴다**(안전한 방향으로 접는다).
 LIGHT_PIDS=""
 for _p in $LIGHT_RAW; do

@@ -189,6 +189,14 @@ fire "프로세스 조회 실패는 0건으로 적지 않는다" "프로세스 �
       PATH="$TMP/stub:$PATH" HARNESS_OS=Linux HARNESS_PROC_ROOT="$TMP/ok" HARNESS_SAMPLE_SEC=1 \
       HARNESS_PROC_PATTERNS="$MARK_H" HARNESS_LIGHT_PROC_PATTERNS="$MARK_L"
 
+# 시작 때 찔러 보기는 되고 실제 조회만 실패하는 경우도 0건으로 읽으면 안 된다.
+mkdir -p "$TMP/stub2"
+printf '#!/bin/sh\ncase "$*" in *zzz_preflight_probe_*) exit 1 ;; esac\necho "Cannot get process list" >&2\nexit 3\n' > "$TMP/stub2/pgrep"
+chmod +x "$TMP/stub2/pgrep"
+check "2" "찔러 보기는 성공, 실제 조회만 실패 → 측정 불가" \
+      PATH="$TMP/stub2:$PATH" HARNESS_OS=Linux HARNESS_PROC_ROOT="$TMP/ok" HARNESS_SAMPLE_SEC=1 \
+      HARNESS_PROC_PATTERNS="$MARK_H" HARNESS_LIGHT_PROC_PATTERNS="$MARK_L"
+
 kill $PID_H $PID_L 2>/dev/null; wait $PID_H $PID_L 2>/dev/null
 trap 'rm -rf "$TMP"' EXIT
 
